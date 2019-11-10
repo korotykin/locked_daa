@@ -26,6 +26,18 @@ TEST_CASE("locked_data")
     }
 }
 
+TEST_CASE("locked_data with default ctor")
+{
+    {
+        akt::LockableData<int> a;
+        {
+            auto pa = a.Lock();
+            pa.mValue = 1;
+        }
+        CHECK(1 == a.Lock().mValue);
+    }
+}
+
 TEST_CASE("non locked_data races")
 {
     { // data races
