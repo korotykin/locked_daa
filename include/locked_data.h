@@ -21,10 +21,6 @@ public:
 public:
     template <typename... Args, typename std::enable_if<std::is_constructible<T, Args...>::value, int>::type = 0>
     LockableData(Args&&... args): mValue(std::forward<Args>(args)...) {}
-/*
-    template <typename std::enable_if<std::is_default_constructible<T>::value && std::is_convertable<U, T>::value, int>::type = 0>
-    LockableData() {}
-*/
 private:
     T mValue;
     std::mutex mMtx;
