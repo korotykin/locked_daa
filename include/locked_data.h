@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <mutex>
 #include <type_traits>
 
@@ -15,16 +16,14 @@ class LockableData
 {
 public:
     LockedData<T> Lock() { return LockedData<T>(mMtx, mValue); }
+    std::unique_ptr<LockedData<T>> TryLock()
+    { std::unique_lock<std::mutex> guard{mMtx, std::defer_lock}; if(!guard.try_lock()) return nullptr; return std::unique_ptr<LockedData<T>>(new LockedData<T>(std::move(guard), mValue)); }
 public:
     template <typename... Args, typename std::enable_if<std::is_constructible<T, Args...>::value, int>::type = 0>
     LockableData(Args&&... args): mValue(std::forward<Args>(args)...) {}
 /*
     template <typename std::enable_if<std::is_default_constructible<T>::value && std::is_convertable<U, T>::value, int>::type = 0>
     LockableData() {}
-    template <typename U = T, typename std::enable_if<std::is_copy_constructible<T>::value && std::is_convertable<U, T>::value, int>::type = 0>
-    LockableData(const U& rhv): mValue(rhv) {}
-    template <typename std::enable_if<std::is_move_constructible<T>::value, int>::type = 0>
-    LockableData(T&& rhv): mValue(std::forward<T>(rhv)) {}
 */
 private:
     T mValue;
@@ -34,23 +33,22 @@ private:
 template <typename T>
 class LockedData
 {
+private:
+friend LockableData<T>;
+    LockedData(std::unique_lock<std::mutex>&& guard, T& value): mGuard(std::move(guard)), mValue(value) {}
 public:
     LockedData(std::mutex& mtx, T& value): mGuard(mtx), mValue(value) {}
-
+private:
+    std::unique_lock<std::mutex> mGuard;
 public:
-    T& operator*() { return mValue; }
-    const T& operator*() const { return mValue; }
-    T* operator->() { return &mValue; }
-    const T* operator->() const { return &mValue; }
+    T& mValue;
+
 public:
     LockedData() = delete;
     LockedData(const LockedData<T>&) = delete;
     LockedData(LockedData<T>&& rhv): mGuard(std::move(rhv.mGuard)), mValue(rhv.mValue) {}
     LockedData& operator=(const LockedData<T>&) = delete;
     LockedData& operator=(LockedData<T>&& rhv) { mGuard = std::move(rhv.mGuard); mValue = rhv.mValue; }
-private:
-    std::unique_lock<std::mutex> mGuard;
-    T& mValue;
 };
 
 } // namespace akt

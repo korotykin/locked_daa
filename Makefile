@@ -10,7 +10,7 @@ SOURCES := $(wildcard $(SRC)/*.cpp)
 OBJECTS := $(patsubst $(SRC)/%.cpp,$(BIN)/%.o,$(SOURCES))
 DEPENDS := $(patsubst $(SRC)/%.cpp,$(BIN)/%.d,$(SOURCES))
 
-LIBRARIES	:=
+LIBRARIES	:= -pthread
 EXECUTABLE	:= main
 
 .PHONY: all clean
