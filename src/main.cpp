@@ -78,9 +78,9 @@ TEST_CASE("locked_data - try lock - no races")
         std::vector<std::thread> thrds;
         for ( int k =0; k < 5; ++k) {
             thrds.emplace_back([&i](const int val, const int num)
-            { for(int j = 0; j < num;) { auto pi = i.TryLock(); if(pi) { pi->mValue = pi->mValue+val; ++j; } } }, 10000, 50000);
+            { for(int j = 0; j < num;) { auto pi = i.TryLock(); if(pi) { pi->mValue = pi->mValue+val; ++j; } else {std::this_thread::yield();} } }, 10000, 50000);
             thrds.emplace_back([&i](const int val, const int num)
-            { for(int j = 0; j < num;) {auto pi = i.TryLock(); if(pi) {pi->mValue = pi->mValue-val; ++j; } } }, 10000, 50000);
+            { for(int j = 0; j < num;) {auto pi = i.TryLock(); if(pi) {pi->mValue = pi->mValue-val; ++j; } else {std::this_thread::yield();} } }, 10000, 50000);
         }
         for (auto& thethr: thrds) {
             thethr.join();
